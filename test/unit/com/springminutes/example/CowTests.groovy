@@ -3,13 +3,6 @@ package com.springminutes.example
 import grails.test.*
 
 class CowTests extends GrailsUnitTestCase {
-    protected void setUp() {
-        super.setUp()
-    }
-
-    protected void tearDown() {
-        super.tearDown()
-    }
 
     void testConstraints() {
         mockForConstraintsTests(Cow)
@@ -22,13 +15,17 @@ class CowTests extends GrailsUnitTestCase {
         def cow2 = new Cow(breed: Breed.TexasLonghorn, color: "blue")
         assertFalse cow2.validate()
         assertEquals "nullable", cow2.errors['legs']
-        // assertEquals cow2.errors.allErrors.contains("")
         // Cow with blank color
         def cow3 = new Cow(breed: Breed.TexasLonghorn, color: "", legs: 1)
         assertFalse cow3.validate()
         assertEquals "blank", cow3.errors['color']
         // Custom validator
-        def cow4 = new Cow(breed: Breed.Guernsey, color: "wonky", legs: 7)
+        // Negative legs
+        def cow4 = new Cow(breed: Breed.Guernsey, color: "wonky", legs: -1)
+        assertFalse cow4.validate()
+        assertEquals "invalid.range", cow4.errors['legs']
+        // Too many legs for a Guernsey
+        cow4.legs = 7
         assertFalse cow4.validate()
         assertEquals "invalid.range", cow4.errors['legs']
         cow4.breed = Breed.Holstein
