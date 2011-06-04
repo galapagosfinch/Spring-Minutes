@@ -1,3 +1,5 @@
 *.ipr
 *.iml
 *.iws
+out/
+target/
