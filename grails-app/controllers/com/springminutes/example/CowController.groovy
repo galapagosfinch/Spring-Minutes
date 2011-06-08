@@ -5,7 +5,7 @@ import grails.converters.JSON
 
 class CowController {
 
-    static allowedMethods = [save: "POST", update: "POST", delete: "POST"]
+    static allowedMethods = [save: "POST", update: ["POST", "PUT"], delete: ["POST", "DELETE"]]
 
     def index = {
         redirect(action: "list", params: params)
@@ -29,16 +29,44 @@ class CowController {
     def save = {
         def cowInstance = new Cow(params)
         if (cowInstance.save(flush: true)) {
-            flash.message = "${message(code: 'default.created.message', args: [message(code: 'cow.label', default: 'Cow'), cowInstance.id])}"
-            redirect(action: "show", id: cowInstance.id)
+            withFormat {
+                form {
+                    flash.message = "${message(code: 'default.created.message', args: [message(code: 'cow.label', default: 'Cow'), cowInstance.id])}"
+                    redirect(action: "show", id: cowInstance.id)
+                }
+                xml {
+                    response.status = 200 // OK
+                    render cowInstance as XML
+                }
+                json {
+                    response.status = 200 // OK
+                    render cowInstance as JSON
+                }
+            }
         }
         else {
-            render(view: "create", model: [cowInstance: cowInstance])
+            withFormat {
+                form {
+                    render(view: "create", model: [cowInstance: cowInstance])
+                }
+                xml {
+                    response.status = 400 // Bad Request
+                    render cowInstance.errors as XML
+                }
+                json {
+                    response.status = 400 // Bad Request
+                    render cowInstance.errors as JSON
+                }
+            }
         }
     }
 
     def renderNotFound = {
         html {
+            flash.message = "${message(code: 'default.not.found.message', args: [message(code: 'cow.label', default: 'Cow'), params.id])}"
+            redirect(action: "list")
+        }
+        form {
             flash.message = "${message(code: 'default.not.found.message', args: [message(code: 'cow.label', default: 'Cow'), params.id])}"
             redirect(action: "list")
         }
@@ -99,8 +127,7 @@ class CowController {
             }
         }
         else {
-            flash.message = "${message(code: 'default.not.found.message', args: [message(code: 'cow.label', default: 'Cow'), params.id])}"
-            redirect(action: "list")
+            withFormat renderNotFound
         }
     }
 
@@ -109,17 +136,40 @@ class CowController {
         if (cowInstance) {
             try {
                 cowInstance.delete(flush: true)
-                flash.message = "${message(code: 'default.deleted.message', args: [message(code: 'cow.label', default: 'Cow'), params.id])}"
-                redirect(action: "list")
+                withFormat {
+                    form {
+                        flash.message = "${message(code: 'default.deleted.message', args: [message(code: 'cow.label', default: 'Cow'), params.id])}"
+                        redirect(action: "list")
+                    }
+                    xml {
+                        response.status = 200 // OK
+                        render "${message(code: 'default.deleted.message', args: [message(code: 'cow.label', default: 'Cow'), params.id])}"
+                    }
+                    json {
+                        response.status = 200 // OK
+                        render "${message(code: 'default.deleted.message', args: [message(code: 'cow.label', default: 'Cow'), params.id])}"
+                    }
+                }
             }
             catch (org.springframework.dao.DataIntegrityViolationException e) {
-                flash.message = "${message(code: 'default.not.deleted.message', args: [message(code: 'cow.label', default: 'Cow'), params.id])}"
-                redirect(action: "show", id: params.id)
+                withFormat {
+                    form {
+                        flash.message = "${message(code: 'default.not.deleted.message', args: [message(code: 'cow.label', default: 'Cow'), params.id])}"
+                        redirect(action: "show", id: params.id)
+                    }
+                    xml {
+                        response.status = 409 // Conflict
+                        render "${message(code: 'default.not.deleted.message', args: [message(code: 'cow.label', default: 'Cow'), params.id])}"
+                    }
+                    json {
+                        response.status = 409 // Conflict
+                        render "${message(code: 'default.not.deleted.message', args: [message(code: 'cow.label', default: 'Cow'), params.id])}"
+                    }
+                }
             }
         }
         else {
-            flash.message = "${message(code: 'default.not.found.message', args: [message(code: 'cow.label', default: 'Cow'), params.id])}"
-            redirect(action: "list")
+            withFormat renderNotFound
         }
     }
 }

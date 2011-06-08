@@ -2,11 +2,11 @@ class UrlMappings {
 
 	static mappings = {
         "/rest/$controller/element/$id"{
-            action = [GET:"show"]
+            action = [GET:"show", DELETE: "delete", PUT: "update"]
         }
 
         "/rest/$controller/list"{
-            action = [GET:"list"]
+            action = [GET:"list", POST: "save"]
         }
 
         "/$controller/$action?/$id?"{
